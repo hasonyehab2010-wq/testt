@@ -462,6 +462,43 @@
                 opacity: 0;
             }
         }
+
+     /* تنسيقات الموبايل والآيباد */
+@media (max-width: 768px) {
+    /* تصغير الحاوية الرئيسية لتناسب عرض الشاشة */
+    .container {
+        width: 95%;
+        padding: 10px;
+        margin: 10px auto;
+    }
+
+    /* جعل أيقونات المنصات (100 منصة) تترتب بشكل أفضل */
+    #platformsGrid {
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* توزيع مرن للأيقونات */
+        gap: 10px;
+    }
+
+    .icon-hover {
+        font-size: 1.5rem !important; /* تصغير حجم الأيقونات قليلاً */
+    }
+
+    /* إصلاح عرض روابط المستخدم المضافة */
+    .link-item {
+        flex-direction: column; /* جعل أيقونة الحذف تحت الرابط إذا ضاق المكان */
+        text-align: center;
+        padding: 15px;
+    }
+
+    /* منع خروج النصوص الطويلة عن الشاشة */
+    span.truncate {
+        max-width: 200px; 
+        display: inline-block;
+    }
+
+    /* تصغير حجم الخط في الاسم والوصف */
+    #uName { font-size: 1.2rem; }
+    #uBio { font-size: 0.9rem; }
+}
     </style>
 </head>
 
