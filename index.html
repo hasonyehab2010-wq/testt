@@ -628,23 +628,29 @@
             document.getElementById('charCount').innerText = el.innerText.length + '/150';
         }
 
-        function add() {
-            const urlIn = document.getElementById('urlIn');
-            const v = urlIn.value.trim();
-            if (!v) return;
-            let iconHtml = '';
-            try {
-                const url = new URL(v.startsWith('http') ? v : 'https://' + v);
-                const host = url.hostname.toLowerCase().replace('www.', '');
-                // Smart parsing optimized - priority for common platforms
-                const priority = ['youtube', 'instagram', 'tiktok', 'facebook', 'twitter', 'x.com', 'linkedin', 'github', 'snapchat', 'whatsapp'];
-                let key = priority.find(k => host.includes(k)) || Object.keys(extendedIcons).find(k => host.includes(k));
-                iconHtml = key ? `<i class="${extendedIcons[key]} text-gray-600 text-2xl ml-4"></i>` : `<i class="fas fa-link text-gray-600 text-2xl ml-4"></i>`;
-            } catch (e) { iconHtml = `<i class="fas fa-link text-gray-600 text-2xl ml-4"></i>`; }
-            links.push({ url: v, icon: iconHtml });
-            draw();
-            urlIn.value = '';
-        }
+       function add() {
+    const urlIn = document.getElementById('urlIn');
+    const v = urlIn.value.trim();
+    if (!v) return;
+    let iconHtml = '';
+    try {
+        const url = new URL(v.startsWith('http') ? v : 'https://' + v);
+        const host = url.hostname.toLowerCase().replace('www.', '');
+        
+        // القائمة المحدثة لتشمل المنصات الجديدة
+        const priority = ['youtube', 'instagram', 'tiktok', 'facebook', 'twitter', 'x.com', 'linkedin', 'github', 'snapchat', 'whatsapp', 'messenger', 'kick', 'telenum'];
+        
+        let key = priority.find(k => host.includes(k)) || Object.keys(extendedIcons).find(k => host.includes(k));
+        
+        // إضافة شرط خاص لـ WhatsApp Business إذا كان الرابط يحتوي على wa.me
+        if (host.includes('wa.me')) key = 'whatsapp-business';
+
+        iconHtml = key ? `<i class="${extendedIcons[key]} text-gray-600 text-2xl ml-4"></i>` : `<i class="fas fa-link text-gray-600 text-2xl ml-4"></i>`;
+    } catch (e) { iconHtml = `<i class="fas fa-link text-gray-600 text-2xl ml-4"></i>`; }
+    links.push({ url: v, icon: iconHtml });
+    draw();
+    urlIn.value = '';
+}
 
         function draw() {
             const box = document.getElementById('linksBox');
@@ -680,20 +686,33 @@
             }
         }
 
-        async function save() {
-            const data = { n: document.getElementById('uName').innerText, b: document.getElementById('uBio').innerText, l: links, c: document.documentElement.style.getPropertyValue('--color-mid').trim() || '#3b82f6', img: document.getElementById('pImg').src };
-            const str = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-            const longUrl = window.location.href.split('?')[0] + "?v=" + str;
-            try {
-                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
-                const shortUrl = await res.text();
-                navigator.clipboard.writeText(shortUrl);
-                alert("🚀 تم نسخ الرابط المختصر بنجاح!");
-            } catch (e) {
-                navigator.clipboard.writeText(longUrl);
-                alert("🚀 تم نسخ الرابط الطويل!");
-            }
-        }
+      async function save() {
+    // تقليل حجم البيانات: إذا كانت الصورة موجودة، نتأكد أنها ليست ضخمة جداً
+    const data = { 
+        n: document.getElementById('uName').innerText, 
+        b: document.getElementById('uBio').innerText, 
+        l: links, 
+        c: document.documentElement.style.getPropertyValue('--color-mid').trim() || '#3b82f6', 
+        img: document.getElementById('pImg').src.length > 5000 ? "" : document.getElementById('pImg').src // تجنب الصور الضخمة
+    };
+
+    const str = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const longUrl = window.location.origin + window.location.pathname + "?v=" + str;
+
+    try {
+        // استخدام محرك اختصار الروابط
+        const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+        if (!res.ok) throw new Error();
+        const shortUrl = await res.text();
+        
+        await navigator.clipboard.writeText(shortUrl);
+        alert("🚀 تم اختصار الروابط الـ 100 ونسخ الرابط بنجاح!");
+    } catch (e) {
+        // في حال فشل الاختصار، نحاول نسخ الرابط الطويل
+        await navigator.clipboard.writeText(longUrl);
+        alert("⚠️ الرابط طويل جداً بسبب كثرة المنصات، تم نسخ الرابط كاملاً ولكن يفضل تقليل عدد الروابط أو حجم الصورة.");
+    }
+}
 
         function createParticles() {
             const container = document.getElementById('particles');
