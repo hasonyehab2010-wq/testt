@@ -335,26 +335,39 @@
             </div>`;
         });
     }
-async function shortenWithIsGd(longUrl) {
-    try {
-        // نرسل الرابط للموقع ونطلب النتيجة بصيغة JSON
-        const response = await fetch(`https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`);
-        
-        const data = await response.json();
+async function generateShortLink() {
+    const longUrl = document.getElementById('longUrlInput').value; // افترضت أن هذا ID حقل الإدخال
+    const resultDisplay = document.getElementById('resultDisplay'); // افترضت أن هذا ID مكان ظهور النتيجة
 
-        if (data.shorturl) {
-            console.log("الرابط المختصر بنجاح:", data.shorturl);
-            return data.shorturl;
+    if (!longUrl) {
+        alert("يرجى إدخال رابط أولاً!");
+        return;
+    }
+
+    // إظهار حالة التحميل
+    resultDisplay.innerText = "جاري التوليد...";
+
+    try {
+        // نستخدم وسيط (Proxy) لتخطي حماية المتصفح (CORS)
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+
+        const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+        const data = await response.json();
+        
+        // البيانات تأتي داخل حقل contents في هذا الوسيط
+        const finalData = JSON.parse(data.contents);
+
+        if (finalData.shorturl) {
+            resultDisplay.innerHTML = `رابطك المختصر: <a href="${finalData.shorturl}" target="_blank">${finalData.shorturl}</a>`;
         } else {
-            console.error("خطأ من الموقع:", data.errormessage);
+            resultDisplay.innerText = "خطأ: " + (finalData.errormessage || "فشل الاختصار");
         }
     } catch (error) {
-        console.error("فشل الاتصال بالـ API:", error);
+        console.error("Error:", error);
+        resultDisplay.innerText = "حدث خطأ في الاتصال بالخادم.";
     }
 }
-
-// مثال للاستخدام:
-// shortenWithIsGd("https://your-very-long-website-link.com/profile/123");
     function preview(i) {
         if (i.files && i.files[0]) {
             const r = new FileReader();
