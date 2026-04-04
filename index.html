@@ -344,20 +344,76 @@
         }
     }
 
-    async function save() {
-        const data = { n: document.getElementById('uName').innerText, b: document.getElementById('uBio').innerText, l: links, c: document.documentElement.style.getPropertyValue('--color-mid').trim() || '#3b82f6', img: document.getElementById('pImg').src };
-        const str = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        const longUrl = window.location.href.split('?')[0] + "?v=" + str;
-        try {
-            const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
-            const shortUrl = await res.text();
-            navigator.clipboard.writeText(shortUrl);
-            alert("🚀 تم نسخ الرابط المختصر بنجاح!");
-        } catch(e) { 
-            navigator.clipboard.writeText(longUrl); 
-            alert("🚀 تم نسخ الرابط الطويل!"); 
-        }
+   async function save() {
+    // 1. مفتاح الـ API الخاص بك (ضع المفتاح بين القوسين)
+    const REBRANDLY_API_KEY = "782254e8413d4c45895ce2df200e7e11";
+
+    // 2. تجهيز البيانات (بدون الصورة لضمان قبول الرابط في انستقرام)
+    const data = { 
+        n: document.getElementById('uName').innerText, 
+        b: document.getElementById('uBio').innerText, 
+        l: links, 
+        c: document.documentElement.style.getPropertyValue('--color-mid').trim() || '#3b82f6'
+    };
+
+    // 3. تحويل البيانات لرابط مشفر (Base64)
+    const str = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const longUrl = window.location.origin + window.location.pathname + "?v=" + str;
+
+    try {
+        // 4. إرسال طلب الاختصار لـ Rebrandly تلقائياً
+        const response = await fetch("https://api.rebrandly.com/v1/links", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": REBRANDLY_API_KEY
+            },
+            body: JSON.stringify({
+                destination: longUrl,
+                domain: { fullName: "rebrand.ly" }
+            })
+        });
+
+        if (!response.ok) throw new Error("API Failure");
+
+        const result = await response.json();
+        const shortUrl = "https://" + result.shortUrl;
+
+        // 5. نسخ الرابط القصير المولد للحافظة فوراً
+        await navigator.clipboard.writeText(shortUrl);
+        
+        // رسالة نجاح مخصصة لك
+        alert("تم نسخ الرابط الى الحافظه بنجاح |The link has been copied to the clipboard successfully.",)
+
+    } catch (e) {
+        // في حال فشل الـ API (مثلاً المفتاح خطأ أو مشكلة إنترنت)
+        await navigator.clipboard.writeText(longUrl);
+        alert("⚠️ حدث خطأ في الاختصار التلقائي، تم نسخ الرابط الطويل كاحتياط.");
+        console.error("Rebrandly Error:", e);
     }
+}
+   function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 25 + 's';
+                particle.style.animationDuration = (20 + Math.random() * 15) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function updateParticleColors() {
+            const particles = document.querySelectorAll('.particle');
+            const lightColor = getComputedStyle(document.documentElement).getPropertyValue('--color-light');
+            particles.forEach(p => {
+                p.style.background = `radial-gradient(circle at 30% 30%, ${lightColor} 0%, transparent 70%)`;
+                p.style.boxShadow = `0 0 20px ${lightColor}`;
+            });
+        }
+
+
 
     window.onload = () => {
         const p = new URLSearchParams(window.location.search);
@@ -375,6 +431,13 @@
             setTimeout(() => { document.querySelectorAll('.fa-trash-alt').forEach(i => i.style.display = 'none'); }, 300);
         }
     };
+        // Sync particles on theme change
+        document.addEventListener('input', function (e) {
+            if (e.target.type === 'color') {
+                setTimeout(updateParticleColors, 50);
+            }
+        });
+
 </script>
 </body>
 </html>
